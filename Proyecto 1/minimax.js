@@ -10,8 +10,8 @@ const minimax = async (MAX, estado) => {
     // console.log('estado:',estado)
     const data = await restoreMatrix(MAX,estado)
     console.log('srcPoints:',data.srcPoint)
-    await getMoves(MAX,MINI,data.matrix,data.srcPoint)
-    return 25
+    const moves = await getMoves(MAX,MINI,data.matrix,data.srcPoint)
+    return await getBestMove(moves)
 };
 
 const restoreMatrix = async (MAX,estado) => {
@@ -138,12 +138,60 @@ const getMoves = async (MAX, MINI, matrix, srcPoint) => {
             moves.push({x,y:y_aux,heuristica:heu})
         }
 
+
+        // restablecer el valores de variables
+        esValido = false
+        heu = 0
+        y_aux = y
+        x_aux = x
+        // busqueda de movimientos en x+,y+
+        while(true){
+            if(matrix[x_aux + 1][y_aux + 1] != MINI) break
+            esValido = true
+            heu += heuristica[x_aux + 1][y_aux + 1] != undefined ? heuristica[x_aux + 1][y_aux + 1] : 0
+            x_aux++
+            y_aux++
+        }
+        // buscamos la posicion siguiente
+        x_aux++
+        y_aux++
+        // verificar si es un movimiento valido
+        if(esValido && matrix[x_aux][y_aux] == EMPTY){
+            heu += heuristica[x_aux][y_aux] != undefined ? heuristica[x_aux][y_aux] : 0
+            moves.push({x:x_aux,y:y_aux,heuristica:heu})
+        }
+
+
+        // restablecer el valores de variables
+        esValido = false
+        heu = 0
+        y_aux = y
+        x_aux = x
+        // busqueda de movimientos en x-,y-
+        while(true){
+            if(matrix[x_aux - 1][y_aux - 1] != MINI) break
+            esValido = true
+            heu += heuristica[x_aux - 1][y_aux - 1] != undefined ? heuristica[x_aux - 1][y_aux - 1] : 0
+            x_aux--
+            y_aux--
+        }
+        // buscamos la posicion siguiente
+        x_aux--
+        y_aux--
+        // verificar si es un movimiento valido
+        if(esValido && matrix[x_aux][y_aux] == EMPTY){
+            heu += heuristica[x_aux][y_aux] != undefined ? heuristica[x_aux][y_aux] : 0
+            moves.push({x:x_aux,y:y_aux,heuristica:heu})
+        }
     });
+    return  moves
+}
+
+const getBestMove = (moves) => {
     console.log('Movimientos:')
     moves.forEach(move=>{
         console.log(move)
     })
 }
-
 
 module.exports = minimax
