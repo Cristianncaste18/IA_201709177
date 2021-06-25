@@ -6,11 +6,12 @@ const EMPTY = 2
 
 const minimax = async (MAX, estado) => {
     const MINI = MAX == 1 ? 0 : 1
-    console.log('max:',MAX,',mini:',MINI)
+    // console.log('max:',MAX,',mini:',MINI)
     // console.log('estado:',estado)
     const data = await restoreMatrix(MAX,estado)
-    console.log('srcPoints:',data.srcPoint)
-    const moves = await getMoves(MAX,MINI,data.matrix,data.srcPoint)
+    // console.log('srcPoints:',data.srcPoint)
+    const moves = await predictMove(MAX,MINI,data.matrix,data.srcPoint)
+    // console.log('Predicted:',moves)
     return await getBestMove(moves)
 };
 
@@ -42,196 +43,67 @@ const restoreMatrix = async (MAX,estado) => {
     > Es una ficha del mismo color -> descartar la posicion
     > Es undefiend es decir se sale del tablero -> descarta la posicion
 */
-const getMoves = async (MAX, MINI, matrix, srcPoint) => {
+const predictMove = async (MAX, MINI, matrix, srcPoint) => {
+    let moves = []
+    await srcPoint.forEach((point) => {
+        let result = getMoves(point.x,point.y,1,0,matrix,MAX,MINI)
+        moves = moves.concat(result)
+
+        result = getMoves(point.x,point.y,-1,0,matrix,MAX,MINI)
+        moves = moves.concat(result)
+
+        result = getMoves(point.x,point.y,0,1,matrix,MAX,MINI)
+        moves = moves.concat(result)
+
+        result = getMoves(point.x,point.y,0,-1,matrix,MAX,MINI)
+        moves = moves.concat(result)
+
+        result = getMoves(point.x,point.y,1,1,matrix,MAX,MINI)
+        moves = moves.concat(result)
+
+        result = getMoves(point.x,point.y,-1,-1,matrix,MAX,MINI)
+        moves = moves.concat(result)
+        
+        result = getMoves(point.x,point.y,1,-1,matrix,MAX,MINI)
+        moves = moves.concat(result)
+
+        result = getMoves(point.x,point.y,-1,1,matrix,MAX,MINI)
+        moves = moves.concat(result)
+    })
+    return  moves
+}
+
+const getMoves = (x, y, x_offset, y_offset, matrix, MAX, MINI) => {
+    let heu = 0
     const moves = []
     let esValido = false
-    let heu = 0
-    srcPoint.forEach(point => {
-        esValido = false
+    // buqueda de movimiento en x+
+    while(true){
+        // Seguimos iterando mientras sean fichas del adversario
+        if( (x + x_offset < 0) || (x + x_offset > 7)) break
+        if(matrix[x + x_offset][y + y_offset] != MINI) break
+        // Para que un movimiento sea valido debe existir al menos una casilla de MINI(0), entre MAX (1) y la posicion vacia
+        // Para que el espacio vacio sea movimiento valido primero tuvo que pasar por un MINI (0)
+        // 102
+        // En este caso el espacio vacio no es movimineto valido porque no hay ningun MINI(0) entre el espacio vacio y el MAX(1)
+        // 122
+        esValido = true
+        // apoyandonos de la matriz de heuristica sumamos el valor, si excedemos el limite de la matriz enviamos un 0 por default
+        heu += heuristica[x + x_offset][y + y_offset] != undefined ? heuristica[x + x_offset][y + y_offset] : 0
+        x += x_offset
+        y += y_offset
+    }
+    // buscamos la posicion siguiente
+    x += x_offset
+    y += y_offset
 
-        // coordenadas del punto
-        let x = point.x
-        let y = point.y
-
-        // variables auxiliares para iterar
-        let x_aux = x
-        let y_aux = y
-
-        // buqueda de movimiento en x+
-        while(true){
-            // Seguimos iterando mientras sean fichas del adversario
-            if(matrix[x_aux + 1][y] != MINI) break
-            // Para que un movimiento sea valido debe existir al menos una casilla de MINI(0), entre MAX (1) y la posicion vacia
-            // Para que el espacio vacio sea movimiento valido primero tuvo que pasar por un MINI (0)
-            // 102
-            // En este caso el espacio vacio no es movimineto valido porque no hay ningun MINI(0) entre el espacio vacio y el MAX(1)
-            // 122
-            esValido = true
-            // apoyandonos de la matriz de heuristica sumamos el valor, si excedemos el limite de la matriz enviamos un 0 por default
-            heu += heuristica[x_aux + 1][y] != undefined ? heuristica[x_aux + 1][y] : 0
-            x_aux++
-        }
-        // buscamos la posicion siguiente
-        x_aux ++
-        // verificar si es un movimiento valido
-        if(esValido && matrix[x_aux][y] == EMPTY){
-            heu += heuristica[x_aux][y] != undefined ? heuristica[x_aux][y] : 0
-            moves.push({x:x_aux,y,heuristica:heu})
-        }
-
-        
-        // restablecer el valores de variables
-        esValido = false
-        heu = 0
-        x_aux = x
-        // busqueda de movimientos en x-
-        while(true){
-            if(matrix[x_aux - 1][y] != MINI) break
-            esValido = true
-            heu += heuristica[x_aux - 1][y] != undefined ? heuristica[x_aux - 1][y] : 0
-            heu += 200
-            x_aux--
-        }
-        // buscamos la posicion siguiente
-        x_aux --
-        // verificar si es un movimiento valido
-        if(esValido && matrix[x_aux][y] == EMPTY){
-            heu += heuristica[x_aux][y] != undefined ? heuristica[x_aux][y] : 0
-            moves.push({x:x_aux,y,heuristica:heu})
-        }
-
-
-        // restablecer el valores de variables
-        esValido = false
-        heu = 0
-        // busqueda de movimientos en y+
-        while(true){
-            if(matrix[x][y_aux + 1] != MINI) break
-            esValido = true
-            heu += heuristica[x][y_aux + 1] != undefined ? heuristica[x][y_aux + 1] : 0
-            y_aux++
-        }
-        // buscamos la posicion siguiente
-        y_aux ++
-        // verificar si es un movimiento valido
-        if(esValido && matrix[x][y_aux] == EMPTY){
-            heu += heuristica[x][y_aux] != undefined ? heuristica[x][y_aux] : 0
-            moves.push({x,y:y_aux,heuristica:heu})
-        }
-
-
-        // restablecer el valores de variables
-        esValido = false
-        heu = 0
-        y_aux = y
-        // busqueda de movimientos en y-
-        while(true){
-            if(matrix[x][y_aux - 1] != MINI) break
-            esValido = true
-            heu += heuristica[x][y_aux - 1] != undefined ? heuristica[x][y_aux - 1] : 0
-            y_aux--
-        }
-        // buscamos la posicion siguiente
-        y_aux --
-        // verificar si es un movimiento valido
-        if(esValido && matrix[x][y_aux] == EMPTY){
-            heu += heuristica[x][y_aux] != undefined ? heuristica[x][y_aux] : 0
-            moves.push({x,y:y_aux,heuristica:heu})
-        }
-
-
-        // restablecer el valores de variables
-        esValido = false
-        heu = 0
-        y_aux = y
-        x_aux = x
-        // busqueda de movimientos en x+,y+
-        while(true){
-            if(matrix[x_aux + 1][y_aux + 1] != MINI) break
-            esValido = true
-            heu += heuristica[x_aux + 1][y_aux + 1] != undefined ? heuristica[x_aux + 1][y_aux + 1] : 0
-            x_aux++
-            y_aux++
-        }
-        // buscamos la posicion siguiente
-        x_aux++
-        y_aux++
-        // verificar si es un movimiento valido
-        if(esValido && matrix[x_aux][y_aux] == EMPTY){
-            heu += heuristica[x_aux][y_aux] != undefined ? heuristica[x_aux][y_aux] : 0
-            moves.push({x:x_aux,y:y_aux,heuristica:heu})
-        }
-
-
-        // restablecer el valores de variables
-        esValido = false
-        heu = 0
-        y_aux = y
-        x_aux = x
-        // busqueda de movimientos en x-,y-
-        while(true){
-            if(matrix[x_aux - 1][y_aux - 1] != MINI) break
-            esValido = true
-            heu += heuristica[x_aux - 1][y_aux - 1] != undefined ? heuristica[x_aux - 1][y_aux - 1] : 0
-            x_aux--
-            y_aux--
-        }
-        // buscamos la posicion siguiente
-        x_aux--
-        y_aux--
-        // verificar si es un movimiento valido
-        if(esValido && matrix[x_aux][y_aux] == EMPTY){
-            heu += heuristica[x_aux][y_aux] != undefined ? heuristica[x_aux][y_aux] : 0
-            moves.push({x:x_aux,y:y_aux,heuristica:heu})
-        }
-
-
-        // restablecer el valores de variables
-        esValido = false
-        heu = 0
-        y_aux = y
-        x_aux = x
-        // busqueda de movimientos en x-,y+
-        while(true){
-            if(matrix[x_aux - 1][y_aux + 1] != MINI) break
-            esValido = true
-            heu += heuristica[x_aux - 1][y_aux + 1] != undefined ? heuristica[x_aux - 1][y_aux + 1] : 0
-            x_aux--
-            y_aux++
-        }
-        // buscamos la posicion siguiente
-        x_aux--
-        y_aux++
-        // verificar si es un movimiento valido
-        if(esValido && matrix[x_aux][y_aux] == EMPTY){
-            heu += heuristica[x_aux][y_aux] != undefined ? heuristica[x_aux][y_aux] : 0
-            moves.push({x:x_aux,y:y_aux,heuristica:heu})
-        }
-
-
-        // restablecer el valores de variables
-        esValido = false
-        heu = 0
-        y_aux = y
-        x_aux = x
-        // busqueda de movimientos en x+,y-
-        while(true){
-            if(matrix[x_aux + 1][y_aux - 1] != MINI) break
-            esValido = true
-            heu += heuristica[x_aux + 1][y_aux - 1] != undefined ? heuristica[x_aux + 1][y_aux - 1] : 0
-            x_aux++
-            y_aux--
-        }
-        // buscamos la posicion siguiente
-        x_aux++
-        y_aux--
-        // verificar si es un movimiento valido
-        if(esValido && matrix[x_aux][y_aux] == EMPTY){
-            heu += heuristica[x_aux][y_aux] != undefined ? heuristica[x_aux][y_aux] : 0
-            moves.push({x:x_aux,y:y_aux,heuristica:heu})
-        }
-    });
-    return  moves
+    // verificar si es un movimiento valido
+    if( (x + x_offset < 0) || (x + x_offset > 7)) return []
+    if(esValido && matrix[x][y] == EMPTY){
+        heu += heuristica[x][y] != undefined ? heuristica[x][y] : 0
+        moves.push({x,y,heuristica:heu})
+    }
+    return moves
 }
 
 const getBestMove = (moves) => {
@@ -247,6 +119,8 @@ const getBestMove = (moves) => {
         // a debe ser igual b
         return 0;
     })
+    console.log('Movimientos-------------------------')
+    console.log(moves)
     move = moves[0]
     return move.x +''+move.y
 }
