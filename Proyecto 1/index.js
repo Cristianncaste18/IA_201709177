@@ -2,18 +2,15 @@ const express = require('express')
 const app = express()
 const logger = require('morgan')
 const axios = require('axios');
+const minimax = require('./minimax')
 
 app.use(logger('dev'))
-app.use(express.json({limit:'10mb'}));
-app.use(express.urlencoded({extended: '10mb'}))
 
 app.get('', async (req,res) =>{
-    console.log('Llega GET')
     turno = req.query.turno
     estado = req.query.estado
-    console.log('turno:',turno)
-    console.log('estado',estado)
-    res.send(String(25))
+    const result = await minimax(turno,estado)
+    res.send(String(result))
 })
 
 app.listen(3000,()=>{ 
