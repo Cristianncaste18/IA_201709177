@@ -79,26 +79,70 @@ const getMoves = async (MAX, MINI, matrix, srcPoint) => {
             moves.push({x:x_aux,y,heuristica:heu})
         }
 
+        
         // restablecer el valores de variables
         esValido = false
+        heu = 0
         x_aux = x
-
         // busqueda de movimientos en x-
         while(true){
             if(matrix[x_aux - 1][y] != MINI) break
             esValido = true
+            heu += heuristica[x_aux - 1][y] != undefined ? heuristica[x_aux - 1][y] : 0
             x_aux--
         }
         // buscamos la posicion siguiente
         x_aux --
         // verificar si es un movimiento valido
         if(esValido && matrix[x_aux][y] == EMPTY){
-            moves.push({x:x_aux,y})
+            heu += heuristica[x_aux][y] != undefined ? heuristica[x_aux][y] : 0
+            moves.push({x:x_aux,y,heuristica:heu})
+        }
+
+
+        // restablecer el valores de variables
+        esValido = false
+        heu = 0
+        // busqueda de movimientos en y+
+        while(true){
+            if(matrix[x][y_aux + 1] != MINI) break
+            esValido = true
+            heu += heuristica[x][y_aux + 1] != undefined ? heuristica[x][y_aux + 1] : 0
+            y_aux++
+        }
+        // buscamos la posicion siguiente
+        y_aux ++
+        // verificar si es un movimiento valido
+        if(esValido && matrix[x][y_aux] == EMPTY){
+            heu += heuristica[x][y_aux] != undefined ? heuristica[x][y_aux] : 0
+            moves.push({x,y:y_aux,heuristica:heu})
+        }
+
+
+        // restablecer el valores de variables
+        esValido = false
+        heu = 0
+        y_aux = y
+        // busqueda de movimientos en y-
+        while(true){
+            if(matrix[x][y_aux - 1] != MINI) break
+            esValido = true
+            heu += heuristica[x][y_aux - 1] != undefined ? heuristica[x][y_aux - 1] : 0
+            y_aux--
+        }
+        // buscamos la posicion siguiente
+        y_aux --
+        // verificar si es un movimiento valido
+        if(esValido && matrix[x][y_aux] == EMPTY){
+            heu += heuristica[x][y_aux] != undefined ? heuristica[x][y_aux] : 0
+            moves.push({x,y:y_aux,heuristica:heu})
         }
 
     });
-    console.log('Movimiento:')
-    console.log(moves)
+    console.log('Movimientos:')
+    moves.forEach(move=>{
+        console.log(move)
+    })
 }
 
 
