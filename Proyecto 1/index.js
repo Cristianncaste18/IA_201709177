@@ -10,7 +10,7 @@ app.get('', async (req,res) =>{
     turno = req.query.turno
     estado = req.query.estado
     const result = await minimax(turno,estado)
-    res.send(String(result))
+    res.send(result)
 })
 
 app.listen(3000,()=>{ 

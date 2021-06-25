@@ -89,6 +89,7 @@ const getMoves = async (MAX, MINI, matrix, srcPoint) => {
             if(matrix[x_aux - 1][y] != MINI) break
             esValido = true
             heu += heuristica[x_aux - 1][y] != undefined ? heuristica[x_aux - 1][y] : 0
+            heu += 200
             x_aux--
         }
         // buscamos la posicion siguiente
@@ -234,10 +235,20 @@ const getMoves = async (MAX, MINI, matrix, srcPoint) => {
 }
 
 const getBestMove = (moves) => {
-    console.log('Movimientos:')
-    moves.forEach(move=>{
-        console.log(move)
+    moves.sort((a, b) => {
+        // a es mayor que b según criterio de ordenamiento
+        if (a.heuristica > b.heuristica) {
+            return -1;
+        }
+        // a es menor que b según criterio de ordenamiento
+        if (a.heuristica < b.heuristica) {
+          return 1;
+        }
+        // a debe ser igual b
+        return 0;
     })
+    move = moves[0]
+    return move.x +''+move.y
 }
 
 module.exports = minimax
